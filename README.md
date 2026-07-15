@@ -1,88 +1,135 @@
-# BoardSync (Project Staffaract)
+# BoardSYNC
 
-A high-performance, AI-powered "digital twin" of classroom and presentation whiteboards.
+> **AI-powered lecture evaluation and faculty performance reporting platform**
 
-BoardSync captures the dynamic evolution of a whiteboard during a lecture or presentation, allowing educators and students to instantly replay the "Story" of the board—from blank slate to finished notes—without watching the entire video.
+BoardSYNC runs on a computation server and automatically analyzes lecture recordings to evaluate teaching quality — generating detailed, objective reports on how well a faculty member delivered their class.
 
-## 💡 The Concept
+---
 
-Most lecture videos start with a blank board and end with a full one. Watching the entire video just to see the notes is highly inefficient.
+## What It Does
 
-BoardSync solves this by using **GPU-accelerated diff analysis** to identify exactly when the board changes and automatically extracting only the "Key Frames" (keyframes). It then stitches these frames into a fast-paced, replayable sequence that shows the board's transformation at a glance.
+BoardSYNC takes a lecture video as input and produces a comprehensive evaluation report covering:
+- **Content Coverage** — What was written/taught on the board vs. what was expected
+- **Structured Transcription** — Every board state captured and transcribed into Markdown
+- **Teaching Flow Analysis** — How content evolved over time (via timestamps)
+- **Completeness Assessment** — Was the curriculum delivered fully?
 
-## 🚀 Features
+The goal is to give institutions, HoDs, and faculty themselves an objective, data-driven view of each class — without manually watching hours of video.
 
-- **🧠 Intelligent Frame Selection**: Uses **Mean Squared Error (MSE)** on the GPU (via CuPy) to detect significant visual changes.
-- **⚡ GPU Acceleration**: Leverages NVIDIA CUDA for high-speed frame differencing—essential for analyzing long videos (2+ hours).
-- **⏱️ Smart Timestamps**: Automatically generates human-readable timestamps (e.g., `05m_12s`) for each extracted frame.
-- **📁 Organized Output**: Saves frames to a structured directory with clear naming conventions.
-- **🖼️ High-Quality Extraction**: Preserves the original image quality for clear readability.
+---
 
-## 🛠️ Getting Started
+## Architecture
 
-### Prerequisites
+BoardSYNC is a modular multi-pipeline system running on a computation server. Each pipeline is independently deployable and feeds into the next:
 
-- **NVIDIA GPU**: Required for CuPy acceleration.
-- **Python 3.8+**
-- **CUDA Toolkit**: Installed and configured (usually comes with PyTorch/TensorFlow installations).
+```
+BoardSYNC/
+│
+├── pipeline-vision/        ✅ ACTIVE  — Smartboard OCR & board state transcription
+├── pipeline-audio/         🔜 PLANNED — Lecture speech transcription (Whisper)
+├── pipeline-reasoning/     🔜 PLANNED — Evaluation engine: scoring, report generation
+├── backend-core/           🔜 PLANNED — API server, job queue, database
+├── frontend-dashboard/     🔜 PLANNED — Admin/faculty web dashboard
+└── edge-apk/               🔜 PLANNED — Android app for classroom recording
+```
 
-### Installation
+---
 
-1.  **Clone the repository** (or copy the script).
-2.  **Install dependencies**: 
-    ```bash
-    pip install opencv-python cupy-cuda12x
-    # Or for a specific CUDA version:
-    # pip install cupy-cuda118
-    ```
+## pipeline-vision — Smartboard Transcription Pipeline
 
-### Usage
+**Status: ✅ Active**
 
-1.  **Place your video** file (e.g., `your_lecture.mp4`) in the `pipeline-vision/` directory.
-2.  **Configure the script**: Open `frame_extractor.py` and modify the constants in the `if __name__ == "__main__"` block:
-    ```python
-    # ---> SETUP INSTRUCTIONS <---
-    # 1. Put your 2-hour .mp4 file in the pipeline-vision folder.
-    # 2. Change 'your_2hour_class.mp4' to the exact name of your video file.
-    
-    VIDEO_FILE = "your_2hour_class.mp4" 
-    OUTPUT_DIRECTORY = "test-frames" # or "extracted_keyframes"
-    ```
-3.  **Run the extractor**:
-    ```bash
-    python pipeline-vision/frame_extractor.py
-    ```
+The first completed pipeline. Processes lecture video to extract and transcribe every unique board state.
 
-## ⚙️ Configuration & Parameters
+### How It Works
 
-The script uses the following key parameters in `extract_unique_frames()`:
+**Step 1 — Stable-State Frame Extraction** (`frame_extractor.py` + `run_vision_pipeline.py`)
+- Uses **SSIM (Structural Similarity Index)** to detect when the board is in a *stable state* — i.e., the faculty member has stopped writing and the content is settled
+- Skips noisy transition frames (mid-write, hand movements, scrolling)
+- Crops out recording overlays (status bar, timer) to prevent false-change detection
+- Only saves frames that are meaningfully different from the previous saved state
+- Configurable thresholds: `motion_threshold` (default: `0.98`) and `change_threshold` (default: `0.95`)
 
-- **`video_path`**: Path to the input MP4.
-- **`output_folder`**: Where to save the extracted images.
-- **`mse_threshold`** (Default: `800.0`):
-    - *What it does*: Defines how "different" two frames must be to trigger a save.
-    - *Tuning*: Higher values = fewer frames (more aggressive skipping). Lower values = more frames (more frequent saves).
-    - *Recommendation*: Start with `800.0`. If you get too many frames, increase it. If you miss important updates, decrease it.
+**Step 2 — VLM Board Reading** (`vision_agent.py`)
+- Loads **Qwen2.5-VL-7B-Instruct** with **4-bit quantization** (runs on 8GB–12GB VRAM)
+- Pedagogical OCR system prompt: extracts written text, formats equations as **LaTeX**, describes diagrams
+- Ignores the presenter, students, and classroom environment — only reads the board
+- Outputs a structured Markdown file (`smartboard_context.md`) with one section per timestamp
 
-## 🎨 The Output
+### Quick Start
 
-The script generates a folder (e.g., `test-frames`) containing:
+```bash
+# From the pipeline-vision directory
+cd pipeline-vision
 
-- `frame_00m_00s.jpg` (The initial empty or title slide)
-- `frame_01m_34s.jpg` (The first significant board update)
-- `frame_02m_15s.jpg`
-- ... and so on.
+# Activate venv
+.\venv\Scripts\activate        # Windows
+# source venv/bin/activate     # Linux/macOS
 
-This sequence represents the **visual story** of the lecture, allowing you to see the entire content in seconds.
+# Run the full pipeline on a lecture recording
+python run_vision_pipeline.py --video "lecture_recording.mp4"
 
-## 🤝 Contributing
+# Arguments:
+#   --video        Path to the lecture video (required)
+#   --frames-dir   Where to save extracted frames (default: ./test-frames)
+#   --output       Output report file (default: smartboard_context.md)
+```
 
-This project is open for expansion. Ideas for future work:
-- **Board Detection**: Automatically detecting the physical boundaries of the whiteboard.
-- **OCR & Indexing**: Extracting text from frames to create a searchable index.
-- **Audio Sync**: Aligning keyframes with the audio transcript.
-- **Web Viewer**: A simple UI to replay the extracted frames.
+### Output Example
 
-## 📝 License
+```markdown
+# Smartboard Transcription
+
+## Timestamp: 06m_03s
+Slide: "OS FOUNDATIONS & KERNEL ARCHITECTURE"
+Topics covered: Linux Systems, OS Overview, Control Flow, UI, App Management
+
+## Timestamp: 06m_54s
+### Control Flow Diagram
+User -> Application -> Operating System -> Hardware
+```
+
+### Hardware Requirements (Computation Server)
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| GPU VRAM  | 8 GB (4-bit) | 12 GB (8-bit) |
+| GPU       | RTX 3060 | RTX 4070 / RTX 5070 |
+| RAM       | 16 GB | 32 GB |
+| Python    | 3.10+ | 3.11+ |
+
+---
+
+## Upcoming Pipelines
+
+| Module | Purpose | Status |
+|--------|---------|--------|
+| `pipeline-audio` | Whisper speech-to-text — transcribes what the faculty *said* | Planned |
+| `pipeline-reasoning` | Evaluation engine — scores teaching quality, generates faculty report | Planned |
+| `backend-core` | FastAPI server, PostgreSQL, job queue (Celery), auth | Planned |
+| `frontend-dashboard` | Web dashboard for HoDs, admin, and faculty self-review | Planned |
+| `edge-apk` | Android app for automated classroom recording | Planned |
+
+---
+
+## Evaluation Report (End Goal)
+
+Once all pipelines are connected, BoardSYNC will generate a structured faculty evaluation report like:
+
+```
+Faculty Evaluation Report — Dr. [Name]
+Course: Operating Systems | Date: 2026-07-02
+
+Board Coverage Score:     87/100
+Topics Delivered:         5 / 6 planned
+Avg Board Legibility:     High
+Teaching Pace:            Moderate (30 stable states in 45 min)
+Audio Clarity:            [pipeline-audio — coming soon]
+Content Accuracy:         [pipeline-reasoning — coming soon]
+```
+
+---
+
+## License
 
 MIT
