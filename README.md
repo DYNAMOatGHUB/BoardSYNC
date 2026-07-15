@@ -25,12 +25,12 @@ BoardSYNC is a modular multi-pipeline system running on a computation server. Ea
 ```
 BoardSYNC/
 │
-├── pipeline-vision/        ✅ ACTIVE  — Smartboard OCR & board state transcription
-├── pipeline-audio/         🔜 PLANNED — Lecture speech transcription (Whisper)
-├── pipeline-reasoning/     🔜 PLANNED — Evaluation engine: scoring, report generation
-├── backend-core/           🔜 PLANNED — API server, job queue, database
-├── frontend-dashboard/     🔜 PLANNED — Admin/faculty web dashboard
-└── edge-apk/               🔜 PLANNED — Android app for classroom recording
+├── pipeline-vision/        ✅ ACTIVE  — Smartboard frame extraction + VLM transcription
+├── pipeline-audio/         ✅ ACTIVE  — Audio normalization, VAD, diarization, Whisper ASR
+├── pipeline-reasoning/     🔜 PLANNED — Evaluation engine, scoring, report generation
+├── backend-core/           🔜 PLANNED — API server, database, auth
+├── frontend-dashboard/     🔜 PLANNED — Student/educator web UI
+└── edge-apk/               🔜 PLANNED — Android APK for on-device capture
 ```
 
 ---
@@ -104,7 +104,7 @@ User -> Application -> Operating System -> Hardware
 
 | Module | Purpose | Status |
 |--------|---------|--------|
-| `pipeline-audio` | Whisper speech-to-text — transcribes what the faculty *said* | Planned |
+| `pipeline-audio` | FFmpeg normalization → Silero VAD → speaker diarization → Whisper-Turbo ASR | ✅ Active |
 | `pipeline-reasoning` | Evaluation engine — scores teaching quality, generates faculty report | Planned |
 | `backend-core` | FastAPI server, PostgreSQL, job queue (Celery), auth | Planned |
 | `frontend-dashboard` | Web dashboard for HoDs, admin, and faculty self-review | Planned |
@@ -124,7 +124,7 @@ Board Coverage Score:     87/100
 Topics Delivered:         5 / 6 planned
 Avg Board Legibility:     High
 Teaching Pace:            Moderate (30 stable states in 45 min)
-Audio Clarity:            [pipeline-audio — coming soon]
+Audio Clarity:            Delivered by pipeline-audio (Whisper-Turbo ASR)
 Content Accuracy:         [pipeline-reasoning — coming soon]
 ```
 
