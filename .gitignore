@@ -1,0 +1,22 @@
+# Ignore Virtual Environments
+venv/
+env/
+__pycache__/
+
+# Ignore Media Files
+*.mp4
+*.wav
+*.mp3
+*.mkv
+
+# Ignore Generated Pipeline Outputs
+/pipeline-vision/test-frames/
+/pipeline-vision/smartboard_context.md
+
+# Ignore HuggingFace model cache
+.cache/
+
+# Ignore AI Models
+*.pt
+*.safetensors
+*.onnx
