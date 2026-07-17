@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ai_status_title">AI Pipeline Status</string>
+    <string name="api_key_hint">API Key</string>
+    <string name="app_name">Edge AI</string>
+    <string name="audio_title">Audio Recording</string>
+    <string name="capture_title">Screen Capture</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="download_report">Download</string>
+    <string name="email_hint">Email Address</string>
+    <string name="enterprise_edition">Enterprise Edition</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="generate_pdf">Generate PDF</string>
+    <string name="history_title">Session History</string>
+    <string name="live_title">Live Processing</string>
+    <string name="login_btn">LOGIN</string>
+    <string name="login_title">Sign In to Edge Smartboard AI</string>
+    <string name="notifications_title">Notifications</string>
+    <string name="password_hint">Password</string>
+    <string name="pause_capture">Pause</string>
+    <string name="remember_me">Remember Me</string>
+    <string name="reports_title">Reports</string>
+    <string name="resume_capture">Resume</string>
+    <string name="save_wav">Save WAV</string>
+    <string name="screen_capture_service">Screen capture is active</string>
+    <string name="server_url_hint">Server URL</string>
+    <string name="session_title">Session Details</string>
+    <string name="settings_title">Settings</string>
+    <string name="share_report">Share</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="start_capture">Start Capture</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_capture">Stop Capture</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="upload_cancel">Cancel</string>
+    <string name="upload_retry">Retry</string>
+    <string name="upload_service">Uploading session data</string>
+    <string name="upload_start">Start Upload</string>
+    <string name="upload_title">Upload Session</string>
+    <string name="version">Version 1.0.0</string>
+    <style name="Theme.EdgeSmartboardAI" parent="android:Theme.NoTitleBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+    </style>
+</resources>
