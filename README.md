@@ -30,7 +30,7 @@ BoardSYNC/
 ├── pipeline-reasoning/     🔜 PLANNED — Evaluation engine, scoring, report generation
 ├── backend-core/           🔜 PLANNED — API server, database, auth
 ├── frontend-dashboard/     🔜 PLANNED — Student/educator web UI
-└── edge-apk/               🔜 PLANNED — Android APK for on-device capture
+├── edge-apk/               ✅ ACTIVE  — Android app for on-device lecture capture
 ```
 
 ---
@@ -108,7 +108,7 @@ User -> Application -> Operating System -> Hardware
 | `pipeline-reasoning` | Evaluation engine — scores teaching quality, generates faculty report | Planned |
 | `backend-core` | FastAPI server, PostgreSQL, job queue (Celery), auth | Planned |
 | `frontend-dashboard` | Web dashboard for HoDs, admin, and faculty self-review | Planned |
-| `edge-apk` | Android app for automated classroom recording | Planned |
+| `edge-apk` | Android app for automated classroom recording | ✅ Active |
 
 ---
 
