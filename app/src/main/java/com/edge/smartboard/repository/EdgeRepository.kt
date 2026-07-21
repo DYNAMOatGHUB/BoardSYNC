@@ -167,4 +167,53 @@ class EdgeRepository @Inject constructor(
     // ── Storage utils ─────────────────────────────────────
     suspend fun getTotalSessions() = sessionDao.getTotalCount()
     suspend fun getTotalStorage() = sessionDao.getTotalStorageBytes() ?: 0L
+
+    // ── Teacher Analysis Upload ────────────────────────────
+    suspend fun uploadTeacherSession(
+        videoFile: java.io.File,
+        frames: List<java.io.File>,
+        audioFile: java.io.File?,
+        teacherId: String,
+        teacherName: String,
+        subject: String,
+        durationMs: Long,
+        fileSizeBytes: Long
+    ): Result<com.edge.smartboard.models.TeacherUploadResponse> {
+        return try {
+            val token = "Bearer ${getToken()}"
+
+            // Video part
+            val videoBody = videoFile.asRequestBody("video/mp4".toMediaTypeOrNull())
+            val videoPart = MultipartBody.Part.createFormData("video", videoFile.name, videoBody)
+
+            // Frame parts (each named "frames")
+            val frameParts = frames.map { f ->
+                val fb = f.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("frames", f.name, fb)
+            }
+
+            // Audio part (optional)
+            val audioPart = audioFile?.let { af ->
+                val ab = af.asRequestBody("audio/wav".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("audio", af.name, ab)
+            }
+
+            val response = api.uploadTeacherSession(
+                token         = token,
+                video         = videoPart,
+                frames        = frameParts,
+                audio         = audioPart,
+                teacherId     = teacherId.toRequestBody("text/plain".toMediaTypeOrNull()),
+                teacherName   = teacherName.toRequestBody("text/plain".toMediaTypeOrNull()),
+                subject       = subject.toRequestBody("text/plain".toMediaTypeOrNull()),
+                durationMs    = durationMs.toString().toRequestBody("text/plain".toMediaTypeOrNull()),
+                frameCount    = frames.size.toString().toRequestBody("text/plain".toMediaTypeOrNull()),
+                fileSizeBytes = fileSizeBytes.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            )
+            if (response.isSuccessful) Result.success(response.body()!!)
+            else Result.failure(Exception("Upload failed: ${response.code()} ${response.message()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -193,3 +193,38 @@ data class UploadResponse(
 data class ApiError(
     val detail: String
 )
+
+// ─── Teacher upload ───────────────────────────────────────
+data class TeacherUploadResponse(
+    val success: Boolean,
+    val sessionId: String,
+    val teacherId: String,
+    val framesReceived: Int,
+    val audioReceived: Boolean,
+    val message: String
+)
+
+// ─── Local Recording (Room entity) ───────────────────────
+@Entity(tableName = "local_recordings")
+data class LocalRecording(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+
+    // File paths
+    val videoPath: String,
+    val framesDir: String?,          // dir containing extracted JPEGs
+    val audioPath: String?,          // extracted WAV file
+
+    // Metadata
+    val filename: String,
+    val durationSeconds: Long,
+    val fileSizeBytes: Long,
+    val frameCount: Int,
+    val recordedAt: Long = System.currentTimeMillis(),
+
+    // Upload / processing
+    val uploadStatus: String = "PENDING",  // PENDING | PROCESSING | UPLOADED | FAILED
+    val serverSessionId: String? = null,
+    val analysisScore: Float? = null,
+    val errorMessage: String? = null
+)

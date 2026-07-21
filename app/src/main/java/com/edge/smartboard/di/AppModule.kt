@@ -11,6 +11,7 @@ import com.edge.smartboard.api.EdgeApiService
 import com.edge.smartboard.database.EdgeDatabase
 import com.edge.smartboard.database.SessionDao
 import com.edge.smartboard.repository.EdgeRepository
+import com.edge.smartboard.processing.VideoProcessor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -68,8 +69,8 @@ object AppModule {
             .addInterceptor(dynamicUrlInterceptor)
             .addInterceptor(logging)
             .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(300, TimeUnit.SECONDS)  // 5 min for large video uploads
             .build()
     }
 
@@ -109,4 +110,9 @@ object AppModule {
     @Singleton
     fun provideWorkManager(@ApplicationContext context: Context): WorkManager =
         WorkManager.getInstance(context)
+
+    @Provides
+    @Singleton
+    fun provideVideoProcessor(@ApplicationContext context: Context): VideoProcessor =
+        VideoProcessor(context)
 }

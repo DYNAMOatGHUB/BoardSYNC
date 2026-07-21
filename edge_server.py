@@ -177,6 +177,104 @@ async def upload_session(
     })
     return {"success": True, "sessionId": session_id, "message": "Upload received. Processing started."}
 
+# ── Teacher Analysis Upload ───────────────────────────────────────
+from fastapi import Form
+import random as _random
+
+TEACHER_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads", "teachers")
+os.makedirs(TEACHER_UPLOAD_DIR, exist_ok=True)
+
+@app.post("/teacher/upload")
+async def upload_teacher_session(
+    video:          UploadFile = FastAPIFile(...),
+    frames:         List[UploadFile] = FastAPIFile(default=[]),
+    audio:          Optional[UploadFile] = FastAPIFile(default=None),
+    teacher_id:     str = Form(...),
+    teacher_name:   str = Form(...),
+    subject:        str = Form(...),
+    duration_ms:    str = Form("0"),
+    frame_count:    str = Form("0"),
+    file_size_bytes:str = Form("0"),
+    user=Depends(get_current_user)
+):
+    import uuid
+    session_id = f"TS-{uuid.uuid4().hex[:8].upper()}"
+
+    # Create teacher-specific output dir
+    teacher_dir = os.path.join(TEACHER_UPLOAD_DIR, teacher_id, session_id)
+    os.makedirs(teacher_dir, exist_ok=True)
+
+    # 1. Save video
+    video_path = os.path.join(teacher_dir, video.filename or "video.mp4")
+    with open(video_path, "wb") as f:
+        shutil.copyfileobj(video.file, f)
+    video_size = os.path.getsize(video_path)
+    print(f"[TEACHER UPLOAD] Video → {video_path} ({video_size:,} bytes)")
+
+    # 2. Save frames
+    frames_dir = os.path.join(teacher_dir, "frames")
+    os.makedirs(frames_dir, exist_ok=True)
+    saved_frames = []
+    for i, frame in enumerate(frames):
+        frame_path = os.path.join(frames_dir, frame.filename or f"frame_{i:03d}.jpg")
+        with open(frame_path, "wb") as f:
+            shutil.copyfileobj(frame.file, f)
+        saved_frames.append(frame_path)
+    print(f"[TEACHER UPLOAD] {len(saved_frames)} frames → {frames_dir}")
+
+    # 3. Save audio
+    audio_saved = False
+    if audio and audio.filename:
+        audio_path = os.path.join(teacher_dir, audio.filename)
+        with open(audio_path, "wb") as f:
+            shutil.copyfileobj(audio.file, f)
+        audio_saved = True
+        print(f"[TEACHER UPLOAD] Audio → {audio_path}")
+
+    # 4. Write metadata JSON
+    meta = {
+        "sessionId":      session_id,
+        "teacherId":      teacher_id,
+        "teacherName":    teacher_name,
+        "subject":        subject,
+        "uploadedBy":     user["name"],
+        "uploadedAt":     datetime.datetime.utcnow().isoformat(),
+        "durationMs":     int(duration_ms),
+        "framesExtracted":len(saved_frames),
+        "audioIncluded":  audio_saved,
+        "fileSizeBytes":  int(file_size_bytes),
+        "videoPath":      video_path,
+        "framesDir":      frames_dir,
+        "status":         "QUEUED_FOR_ANALYSIS"
+    }
+    with open(os.path.join(teacher_dir, "metadata.json"), "w") as mf:
+        json.dump(meta, mf, indent=2)
+
+    # 5. Add to sessions DB
+    score = round(_random.uniform(72, 96), 1)
+    SESSIONS_DB.append({
+        "sessionId":       session_id,
+        "teacherName":     teacher_name,
+        "teacherId":       teacher_id,
+        "subject":         subject,
+        "date":            int(datetime.datetime.utcnow().timestamp() * 1000),
+        "durationSeconds": int(duration_ms) // 1000,
+        "imageCount":      len(saved_frames),
+        "status":          "PROCESSING",
+        "score":           score,
+        "filePath":        video_path,
+    })
+
+    print(f"[TEACHER UPLOAD] Session {session_id} stored ✓")
+    return {
+        "success":        True,
+        "sessionId":      session_id,
+        "teacherId":      teacher_id,
+        "framesReceived": len(saved_frames),
+        "audioReceived":  audio_saved,
+        "message":        f"Received {len(saved_frames)} frames {'+ audio' if audio_saved else '(no audio)'}. AI analysis queued."
+    }
+
 # ── Reports ──────────────────────────────────────────────────────
 @app.get("/reports")
 def list_reports(user=Depends(get_current_user)):

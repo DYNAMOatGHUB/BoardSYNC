@@ -43,6 +43,7 @@ import com.edge.smartboard.ui.reports.ReportsScreen
 import com.edge.smartboard.ui.session.SessionScreen
 import com.edge.smartboard.ui.settings.SettingsScreen
 import com.edge.smartboard.ui.upload.UploadScreen
+import com.edge.smartboard.ui.teacher.TeacherAnalysisScreen
 import com.edge.smartboard.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -74,6 +75,7 @@ fun EdgeSmartboardApp() {
         Screen.Capture.route,
         Screen.History.route,
         Screen.Settings.route,
+        Screen.TeacherAnalysis.route,
         "reports/all"
     )
 
@@ -186,6 +188,12 @@ fun EdgeSmartboardApp() {
                     }
                 )
             }
+
+            composable(Screen.TeacherAnalysis.route) {
+                TeacherAnalysisScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
@@ -196,11 +204,11 @@ fun EdgeBottomNavBar(
     onNavigate: (String) -> Unit
 ) {
     val items = listOf(
-        BottomNavItem("Dashboard", Screen.Dashboard.route, Icons.Default.Dashboard),
-        BottomNavItem("Capture",   Screen.Capture.route,   Icons.Default.Videocam),
-        BottomNavItem("History",   Screen.History.route,   Icons.Default.History),
-        BottomNavItem("Reports",   "reports/all",           Icons.Default.Assessment),
-        BottomNavItem("Settings",  Screen.Settings.route,  Icons.Default.Settings),
+        BottomNavItem("Dashboard", Screen.Dashboard.route,        Icons.Default.Dashboard),
+        BottomNavItem("Capture",   Screen.Capture.route,          Icons.Default.Videocam),
+        BottomNavItem("Teachers",  Screen.TeacherAnalysis.route,  Icons.Default.School),
+        BottomNavItem("Reports",   "reports/all",                 Icons.Default.Assessment),
+        BottomNavItem("Settings",  Screen.Settings.route,         Icons.Default.Settings),
     )
 
     Box(
